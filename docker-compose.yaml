@@ -1,0 +1,10 @@
+services:
+  sage:
+    build: .
+    image: regandfield-sage
+    volumes:
+      - .:/home/sage/work
+    working_dir: /home/sage/work
+    stdin_open: true
+    tty: true
+    command: sage
