@@ -1,7 +1,8 @@
 from sage.all import libgap
 from CrystalPointGroupMN import CrystalPointGroupMN
+from mulliken import mulliken_label   # ★ 追加：Mulliken 判定器を使う
 
-# SO(3) の指標 χ_l(θ) [θ = 2πm/n]。χ_l(θ) = χ_l(2π-θ) なので m と n-m は同値。
+# SO(3) の指標 χ_l(θ) [θ = 2πm/n]
 SO3_CHI_TABLE = {
     (0, 1): {0: 1, 1: 3, 2: 5, 3: 7},
     (1, 2): {0: 1, 1: -1, 2: 1, 3: -1},
@@ -11,7 +12,6 @@ SO3_CHI_TABLE = {
 }
 
 def chi_o3(l, m, n, parity):
-    """O(3) 上の χ_l(g)。g が不正則なら (-1)^l を乗じる。"""
     key = min(m % n, (-m) % n)
     return parity**l * SO3_CHI_TABLE[(key, n)][l]
 
@@ -41,16 +41,21 @@ def decompose_spdf(name, pgmn: CrystalPointGroupMN):
         'f': [chi_o3(3, m, n, p) for (m, n, p) in class_mnp],
     }
 
-    dims = [chi[0] for chi in irreps]  # χ(E) = 次元
-    result = {l: {} for l in ['s', 'p', 'd', 'f']}
+    # ★ Mulliken 記号に変換するために irreps を保持
+    irreps_chi = irreps
+
+    result = {l: [] for l in ['s', 'p', 'd', 'f']}
+
     for label in ['s', 'p', 'd', 'f']:
         chi_l = so3[label]
-        for idx, chi_ir in enumerate(irreps):
+        for idx, chi_ir in enumerate(irreps_chi):
             mult = sum(sizes[j] * chi_l[j] * chi_ir[j] for j in range(k)) // order
             if mult != 0:
-                result[label][idx] = mult
+                # ★ GAP index → Mulliken 記号へ変換
+                mulliken = mulliken_label(name, chi_ir)
+                result[label].append((mulliken, mult))
 
-    return result, dims
+    return result
 
 
 if __name__ == "__main__":
@@ -65,9 +70,10 @@ if __name__ == "__main__":
         choice = input("点群を選択 (番号または名前): ").strip()
         name = groups[int(choice) - 1] if choice.isdigit() else choice
 
-    result, dims = decompose_spdf(name, pg)
-    print(f"\n{name} の s/p/d/f 分裂:")
+    result = decompose_spdf(name, pg)
+
+    print(f"\n{name} の s/p/d/f 分裂（Mulliken 記号）:")
     for label, decomp in result.items():
         if decomp:
-            parts = [f"#{idx}(dim={dims[idx]})×{mult}" for idx, mult in decomp.items()]
+            parts = [f"{mul}×{mult}" for (mul, mult) in decomp]
             print(f"  {label}: {' + '.join(parts)}")
