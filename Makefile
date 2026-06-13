@@ -19,3 +19,6 @@ shell:
 
 gap:
 	docker compose run --rm sage gap
+
+test:
+	docker compose run --rm sage sage -python -m pytest tests/

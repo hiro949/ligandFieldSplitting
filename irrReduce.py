@@ -1,6 +1,6 @@
 from sage.all import libgap
 from CrystalPointGroupMN import CrystalPointGroupMN
-from mulliken import mulliken_label   # ★ 追加：Mulliken 判定器を使う
+from mulliken import mulliken_label   # Mulliken 判定器
 
 # SO(3) の指標 χ_l(θ) [θ = 2πm/n]
 SO3_CHI_TABLE = {
@@ -25,6 +25,15 @@ def import_character_table(gap_expr):
 
 
 def decompose_spdf(name, pgmn: CrystalPointGroupMN):
+    """
+    出力形式を JSON 向けに変更：
+    {
+        "s": {"A1": 1},
+        "p": {"T2": 1},
+        "d": {"E": 1, "T2": 1},
+        "f": {"A2": 1, "T1": 1, "T2": 1}
+    }
+    """
     gap_expr = pgmn.get_gap_expr(name)
     sizes, irreps = import_character_table(gap_expr)
     order = sum(sizes)
@@ -41,26 +50,23 @@ def decompose_spdf(name, pgmn: CrystalPointGroupMN):
         'f': [chi_o3(3, m, n, p) for (m, n, p) in class_mnp],
     }
 
-    # ★ Mulliken 記号に変換するために irreps を保持
-    irreps_chi = irreps
-
-    result = {l: [] for l in ['s', 'p', 'd', 'f']}
+    result = {l: {} for l in ['s', 'p', 'd', 'f']}
 
     for label in ['s', 'p', 'd', 'f']:
         chi_l = so3[label]
-        for idx, chi_ir in enumerate(irreps_chi):
+        for idx, chi_ir in enumerate(irreps):
             mult = sum(sizes[j] * chi_l[j] * chi_ir[j] for j in range(k)) // order
             if mult != 0:
-                # ★ GAP index → Mulliken 記号へ変換
                 mulliken = mulliken_label(name, chi_ir)
-                result[label].append((mulliken, mult))
+                result[label][mulliken] = mult
 
     return result
 
 
 if __name__ == "__main__":
-    import sys
+    import sys, json
     pg = CrystalPointGroupMN()
+
     if len(sys.argv) > 1:
         name = sys.argv[1]
     else:
@@ -72,8 +78,4 @@ if __name__ == "__main__":
 
     result = decompose_spdf(name, pg)
 
-    print(f"\n{name} の s/p/d/f 分裂（Mulliken 記号）:")
-    for label, decomp in result.items():
-        if decomp:
-            parts = [f"{mul}×{mult}" for (mul, mult) in decomp]
-            print(f"  {label}: {' + '.join(parts)}")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
