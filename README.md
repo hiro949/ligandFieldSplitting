@@ -22,11 +22,48 @@
 
 ---
 
+## 使い方
+
+### 依存パッケージのダウンロード
+
+```bash
+make download
+```
+
+GAP の CharacterTable Library（ctbllib）・AtlasRep・utils を `downloads/` に取得します。
+
+### Docker イメージのビルド
+
+```bash
+make build
+```
+
+### 実行
+
+```bash
+make run GROUP=<点群名>
+```
+
+例: `make run GROUP=Oh`
+
+### その他
+
+|コマンド|説明|
+|---|---|
+|`make shell`|Sage インタラクティブシェルを起動|
+|`make gap`|GAP インタラクティブシェルを起動|
+|`make test`|pytest でテストを実行|
+
+---
+
 ## 依存ファイル
 
-`ctbllib-1.3.11.tar.gz` は GAP の Character Table Library です。  
-以下のページから手動でダウンロードし、プロジェクトルートに配置してください。
+以下の3パッケージは `make download` で自動取得されます。
 
-[https://www.math.rwth-aachen.de/~Thomas.Breuer/ctbllib/](https://www.math.rwth-aachen.de/~Thomas.Breuer/ctbllib/)
+| パッケージ | 用途 |
+| --- | --- |
+| ctbllib | GAP の Character Table Library |
+| atlasrep | GAP の Atlas of Group Representations |
+| utils | GAP ユーティリティライブラリ |
 
-Docker ビルド時にコンテナ内へコピーされ、ワークディレクトリには残りません。
+Docker ビルド時にコンテナ内へコピーされます。
